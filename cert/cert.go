@@ -74,6 +74,13 @@ func NewPrivateKey() (*rsa.PrivateKey, error) {
 // NewSelfSignedCACert creates a CA certificate
 func NewSelfSignedCACert(cfg Config, key crypto.Signer) (*x509.Certificate, error) {
 	now := time.Now()
+	expiresAt := duration365d
+	if cfg.ExpiresAt > 0 {
+		expiresAt = time.Duration(cfg.ExpiresAt)
+	} else {
+		expiresAt = duration365d * 10
+	}
+
 	tmpl := x509.Certificate{
 		SerialNumber: new(big.Int).SetInt64(0),
 		Subject: pkix.Name{
@@ -81,7 +88,7 @@ func NewSelfSignedCACert(cfg Config, key crypto.Signer) (*x509.Certificate, erro
 			Organization: cfg.Organization,
 		},
 		NotBefore:             now.UTC(),
-		NotAfter:              now.Add(duration365d * 10).UTC(),
+		NotAfter:              now.Add(expiresAt).UTC(),
 		KeyUsage:              x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
 		BasicConstraintsValid: true,
 		IsCA:                  true,
